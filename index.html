@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Plan de Estudio">
+<meta name="theme-color" content="#fdf6ec">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Plan de Estudio · Mónica</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Lato:wght@300;400&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:transparent;}
+.page{
+  background:#fdf6ec;color:#3a2e1e;font-family:'Lato',sans-serif;
+  padding:1.5rem 1.2rem 2.5rem;min-height:100vh;min-height:100dvh;position:relative;
+  padding-bottom:calc(2.5rem + env(safe-area-inset-bottom));
+  padding-left:calc(1.2rem + env(safe-area-inset-left));
+  padding-right:calc(1.2rem + env(safe-area-inset-right));
+}
+.page::before{content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse at 15% 5%,rgba(100,80,160,.06) 0%,transparent 45%),
+             radial-gradient(ellipse at 85% 95%,rgba(60,100,120,.05) 0%,transparent 45%);}
+
+/* MODE TOGGLE */
+.mode-toggle{display:flex;align-items:center;gap:0;background:rgba(100,80,150,.1);border:0.5px solid rgba(100,80,150,.25);border-radius:20px;padding:3px;margin-bottom:1.4rem;width:fit-content;margin-left:auto;margin-right:auto;}
+.mode-btn{font-family:'Lato',sans-serif;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;padding:6px 18px;border-radius:16px;border:none;cursor:pointer;transition:all .2s;background:transparent;color:rgba(70,50,110,.5);-webkit-tap-highlight-color:transparent;}
+.mode-btn.active{background:#fdf6ec;color:#4a3080;box-shadow:0 1px 4px rgba(100,80,150,.2);}
+
+/* HEADER */
+.header{text-align:center;margin-bottom:1.4rem;}
+.header-title{font-family:'Playfair Display',Georgia,serif;font-size:22px;font-style:italic;font-weight:400;color:#3a2e1e;letter-spacing:1px;margin-bottom:2px;}
+.header-sub{font-size:10px;color:rgba(70,50,110,.45);letter-spacing:3px;text-transform:uppercase;font-family:'Lato',sans-serif;font-weight:300;}
+.header-rule{border:none;border-top:0.5px solid rgba(100,80,150,.2);margin:8px 0;}
+
+/* XP BAR */
+.xp-wrap{background:#fff8ee;border:0.5px solid rgba(100,80,150,.2);border-radius:8px;padding:10px 14px;margin-bottom:1.4rem;}
+.xp-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;}
+.xp-label{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:rgba(70,50,110,.45);}
+.xp-count{font-family:'Playfair Display',Georgia,serif;font-style:italic;font-size:18px;color:#6a4aae;}
+.xp-track{height:6px;background:rgba(100,80,150,.12);border-radius:3px;overflow:hidden;}
+.xp-fill{height:100%;border-radius:3px;transition:width .4s ease;width:0%;background:linear-gradient(to right,#9ab0e0,#b080d0);}
+.xp-fill.sunday{background:linear-gradient(to right,#c084c8,#9060b0);}
+
+/* CHAPTER */
+.chapter{background:#fff8ee;border:0.5px solid rgba(100,80,150,.18);border-radius:10px;margin-bottom:.9rem;overflow:hidden;transition:box-shadow .2s;}
+.chapter:hover{box-shadow:0 2px 12px rgba(100,80,150,.1);}
+.ch-header{display:flex;align-items:center;gap:10px;padding:11px 14px 9px;cursor:pointer;user-select:none;border-bottom:0.5px solid transparent;transition:border-color .2s;-webkit-tap-highlight-color:transparent;}
+.ch-header.open{border-color:rgba(100,80,150,.15);}
+.ch-icon{font-size:18px;flex-shrink:0;}
+.ch-info{flex:1;min-width:0;}
+.ch-name{font-family:'Playfair Display',Georgia,serif;font-size:14px;font-style:italic;color:#5a4020;margin-bottom:1px;}
+.ch-time{font-size:11px;color:rgba(70,50,110,.4);letter-spacing:.5px;}
+.ch-right{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.ch-xp-badge{font-size:10px;font-weight:400;letter-spacing:1px;background:rgba(140,110,210,.1);color:#6a40a0;border:0.5px solid rgba(140,110,210,.28);border-radius:10px;padding:2px 8px;white-space:nowrap;}
+.ch-xp-badge.earned{background:rgba(140,110,210,.22);color:#4a2080;border-color:rgba(120,90,190,.45);}
+.ch-chev{font-size:10px;color:rgba(70,50,110,.3);transition:transform .2s;}
+.ch-chev.open{transform:rotate(180deg);}
+
+/* CHAPTER COLOR VARIANTS */
+.chapter.bloque1 .ch-name{color:#5a3080;}
+.chapter.bloque1{border-color:rgba(140,110,210,.28);}
+.chapter.bloque1 .ch-header.open{border-color:rgba(140,110,210,.2);}
+.chapter.bloque2 .ch-name{color:#1a5060;}
+.chapter.bloque2{border-color:rgba(60,140,160,.28);}
+.chapter.bloque2 .ch-header.open{border-color:rgba(60,140,160,.2);}
+.chapter.bloque3 .ch-name{color:#3a5030;}
+.chapter.bloque3{border-color:rgba(80,140,80,.25);}
+.chapter.bloque3 .ch-header.open{border-color:rgba(80,140,80,.18);}
+.chapter.dom .ch-name{color:#7a3060;}
+.chapter.dom{border-color:rgba(180,80,140,.25);}
+.chapter.dom .ch-header.open{border-color:rgba(180,80,140,.18);}
+
+/* TASKS */
+.tasks{display:none;padding:8px 14px 12px;}
+.tasks.open{display:block;}
+.task{display:flex;align-items:flex-start;gap:10px;padding:6px 0;border-bottom:0.5px solid rgba(100,80,150,.08);cursor:pointer;-webkit-tap-highlight-color:transparent;}
+.task:last-child{border-bottom:none;}
+.task-gem{width:14px;height:14px;border:1.5px solid rgba(100,80,150,.3);border-radius:3px;flex-shrink:0;margin-top:2px;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.task.done .task-gem{background:rgba(140,110,210,.22);border-color:rgba(110,80,190,.55);}
+.task.done .task-gem::after{content:'✓';font-size:9px;color:#7a40c0;}
+.task-body{flex:1;min-width:0;}
+.task-text{font-size:13.5px;color:#4a3a20;line-height:1.4;transition:color .15s;}
+.task.done .task-text{color:rgba(70,50,110,.35);text-decoration:line-through;text-decoration-color:rgba(140,110,210,.4);}
+.task-xp{font-size:10px;color:rgba(100,70,170,.55);margin-top:1px;}
+.task.done .task-xp{color:rgba(100,70,170,.3);}
+.ch-note{font-size:12px;font-style:italic;color:rgba(70,50,110,.4);padding:4px 0 2px 24px;line-height:1.5;}
+
+/* ── TABLA INTERACTIVA ── */
+.ranking-wrap{padding:6px 0 4px;}
+
+.ranking-add{display:flex;gap:8px;margin-bottom:12px;}
+.ranking-input{
+  flex:1;font-family:'Lato',sans-serif;font-size:13px;
+  background:#fdf6ec;border:0.5px solid rgba(100,80,150,.3);
+  border-radius:8px;padding:7px 10px;color:#3a2e1e;outline:none;
+}
+.ranking-input::placeholder{color:rgba(70,50,110,.35);}
+.ranking-input:focus{border-color:rgba(100,80,150,.55);}
+.ranking-add-btn{
+  font-family:'Lato',sans-serif;font-size:11px;letter-spacing:1px;text-transform:uppercase;
+  background:rgba(140,110,210,.12);color:#6a40a0;
+  border:0.5px solid rgba(140,110,210,.3);border-radius:8px;
+  padding:7px 14px;cursor:pointer;white-space:nowrap;transition:all .15s;
+  -webkit-tap-highlight-color:transparent;
+}
+.ranking-add-btn:hover{background:rgba(140,110,210,.22);}
+
+/* Criteria labels */
+.criteria-legend{
+  display:grid;grid-template-columns:1fr 1fr;gap:4px 8px;
+  margin-bottom:10px;
+}
+.crit-label{
+  font-size:10px;letter-spacing:1px;text-transform:uppercase;
+  color:rgba(70,50,110,.45);display:flex;align-items:center;gap:4px;
+}
+.crit-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.dot-gusto{background:#e08060;}
+.dot-dific{background:#c050a0;}
+.dot-exam{background:#5090d0;}
+.dot-area{background:#50a070;}
+
+/* Subject rows */
+.subj-list{display:flex;flex-direction:column;gap:6px;margin-bottom:10px;}
+.subj-row{
+  background:#fff8ee;border:0.5px solid rgba(100,80,150,.15);
+  border-radius:8px;padding:8px 10px;
+}
+.subj-top{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.subj-name{
+  flex:1;font-family:'Playfair Display',Georgia,serif;
+  font-size:13px;font-style:italic;color:#4a3070;min-width:0;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.subj-score-badge{
+  font-size:11px;font-weight:400;letter-spacing:.5px;
+  background:rgba(140,110,210,.1);color:#6a40a0;
+  border:0.5px solid rgba(140,110,210,.25);
+  border-radius:8px;padding:2px 8px;white-space:nowrap;flex-shrink:0;
+}
+.subj-del{
+  font-size:14px;color:rgba(180,80,80,.4);cursor:pointer;
+  background:none;border:none;padding:0 2px;line-height:1;
+  -webkit-tap-highlight-color:transparent;flex-shrink:0;
+}
+.subj-del:hover{color:rgba(180,80,80,.75);}
+
+/* Sliders */
+.sliders{display:grid;grid-template-columns:1fr 1fr;gap:4px 10px;}
+.slider-row{display:flex;flex-direction:column;gap:2px;}
+.slider-lbl{font-size:9px;letter-spacing:1.2px;text-transform:uppercase;color:rgba(70,50,110,.4);}
+.slider-wrap{display:flex;align-items:center;gap:5px;}
+input[type=range]{
+  flex:1;height:4px;-webkit-appearance:none;appearance:none;
+  background:rgba(100,80,150,.15);border-radius:2px;outline:none;cursor:pointer;
+}
+input[type=range].gusto::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:#e08060;cursor:pointer;}
+input[type=range].gusto::-moz-range-thumb{width:12px;height:12px;border-radius:50%;background:#e08060;border:none;cursor:pointer;}
+input[type=range].dific::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:#c050a0;cursor:pointer;}
+input[type=range].dific::-moz-range-thumb{width:12px;height:12px;border-radius:50%;background:#c050a0;border:none;cursor:pointer;}
+input[type=range].exam::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:#5090d0;cursor:pointer;}
+input[type=range].exam::-moz-range-thumb{width:12px;height:12px;border-radius:50%;background:#5090d0;border:none;cursor:pointer;}
+input[type=range].area::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:#50a070;cursor:pointer;}
+input[type=range].area::-moz-range-thumb{width:12px;height:12px;border-radius:50%;background:#50a070;border:none;cursor:pointer;}
+.slider-val{font-size:10px;color:rgba(70,50,110,.5);width:14px;text-align:right;flex-shrink:0;}
+
+/* Ranking result */
+.ranking-result{margin-top:10px;}
+.ranking-title{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:rgba(70,50,110,.4);margin-bottom:6px;}
+.rank-item{
+  display:flex;align-items:center;gap:10px;
+  padding:6px 10px;margin-bottom:4px;
+  background:#fff8ee;border:0.5px solid rgba(100,80,150,.15);border-radius:8px;
+}
+.rank-num{
+  font-family:'Playfair Display',Georgia,serif;font-style:italic;
+  font-size:16px;color:rgba(100,80,150,.35);width:18px;flex-shrink:0;
+}
+.rank-name{flex:1;font-size:13.5px;color:#4a3a20;}
+.rank-bar-wrap{width:60px;height:5px;background:rgba(100,80,150,.12);border-radius:3px;overflow:hidden;flex-shrink:0;}
+.rank-bar{height:100%;background:linear-gradient(to right,#9ab0e0,#b080d0);border-radius:3px;transition:width .3s ease;}
+
+.ranking-empty{font-size:12px;font-style:italic;color:rgba(70,50,110,.35);padding:8px 0;}
+
+/* FOOTER */
+.footer{text-align:center;margin-top:1.8rem;}
+.reset-btn{background:transparent;border:0.5px solid rgba(70,50,110,.2);color:rgba(70,50,110,.4);font-family:'Lato',sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;padding:8px 20px;border-radius:20px;cursor:pointer;transition:all .15s;-webkit-tap-highlight-color:transparent;}
+.reset-btn:hover{color:rgba(70,50,110,.65);border-color:rgba(70,50,110,.4);}
+.footer-quote{font-family:'Playfair Display',Georgia,serif;font-style:italic;font-size:12px;color:rgba(70,50,110,.3);margin-top:14px;line-height:1.6;}
+
+.mode-section.hidden{display:none;}
+.section-divider{border:none;border-top:0.5px solid rgba(100,80,150,.12);margin:0.4rem 0 1rem;}
+</style>
+</head>
+<body>
+<div class="page">
+
+<div class="mode-toggle">
+  <button class="mode-btn active" id="btn-semana" onclick="setMode('semana')">Lunes – Sábado</button>
+  <button class="mode-btn" id="btn-domingo" onclick="setMode('domingo')">Domingo ✦</button>
+</div>
+
+<div class="header">
+  <hr class="header-rule">
+  <div class="header-title" id="main-title">El Grimorio de Estudio</div>
+  <div class="header-sub" id="main-sub">Plan Diario · Mónica</div>
+  <hr class="header-rule">
+</div>
+
+<div class="xp-wrap">
+  <div class="xp-top">
+    <span class="xp-label">✦ XP del Estudio</span>
+    <span class="xp-count" id="xp-display">0 / 90 xp</span>
+  </div>
+  <div class="xp-track"><div class="xp-fill" id="xp-fill"></div></div>
+</div>
+
+<!-- ══════════════ SEMANA ══════════════ -->
+<div id="section-semana" class="mode-section">
+
+  <!-- BLOQUE 1 -->
+  <div class="chapter bloque1" id="b1">
+    <div class="ch-header open" onclick="toggle('b1')">
+      <span class="ch-icon">🧠</span>
+      <div class="ch-info">
+        <div class="ch-name">Bloque I — Active Recall & Vómito</div>
+        <div class="ch-time">3:30 pm · el arranque</div>
+      </div>
+      <div class="ch-right">
+        <span class="ch-xp-badge" id="badge-b1">0 / 30 xp</span>
+        <span class="ch-chev open" id="chev-b1">▾</span>
+      </div>
+    </div>
+    <div class="tasks open" id="tasks-b1">
+      <div class="task" data-id="b1-0" data-xp="8" data-ch="b1" onclick="check(this)">
+        <div class="task-gem"></div>
+        <div class="task-body">
+          <div class="task-text">Índice de Active Recall</div>
+          <div class="task-xp">+8 xp · repaso rápido · flashcards · temas del índice</div>
+        </div>
+      </div>
+      <div class="task" data-id="b1-1" data-xp="12" data-ch="b1" onclick="check(this)">
+        <div class="task-gem"></div>
+        <div class="task-body">
+          <div class="task-text">El Vómito del Día</div>
+          <div class="task-xp">+12 xp · escribir / dictar lo que recuerdas de la academia · luego completar los vacíos</div>
+        </div>
+      </div>
+      <div class="task" data-id="b1-2" data-xp="6" data-ch="b1" onclick="check(this)">
+        <div class="task-gem"></div>
+        <div class="task-body">
+          <div class="task-text">Resúmenes, audios o mapas de los temas</div>
+          <div class="task-xp">+6 xp</div>
+        </div>
+      </div>
+      <div class="task" data-id="b1-3" data-xp="4" data-ch="b1" onclick="check(this)">
+        <div class="task-gem"></div>
+        <div class="task-body">
+          <div class="task-text">Subir fotos a NotebookLM → flashcards en RemNote</div>
+          <div class="task-xp">+4 xp · según los temas del día</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BLOQUE 2 -->
+  <div class="chapter bloque2" id="b2">
+    <div class="ch-header" onclick="toggle('b2')">
+      <span class="ch-icon">⚗️</span>
+      <div class="ch-info">
+        <div class="ch-name">Bloque II — El Orden de Batalla</div>
+        <div class="ch-time">elegir materias · priorizar · estudiar</div>
+      </div>
+      <div class="ch-right">
+        <span class="ch-xp-badge" id="badge-b2">0 / 40 xp</span>
+        <span class="ch-chev" id="chev-b2">▾</span>
+      </div>
+    </div>
+    <div class="tasks" id="tasks-b2">
+      <p class="ch-note" style="padding-left:0;padding-bottom:10px;">✦ Agrega tus materias de hoy y ajusta los 4 criterios. El ranking te dice en qué orden atacar.</p>
+
+      <!-- TABLA INTERACTIVA -->
+      <div class="ranking-wrap">
+        <div class="criteria-legend">
+          <div class="crit-label"><div class="crit-dot dot-gusto"></div>Aversión (+ = más miedo)</div>
+          <div class="crit-label"><div class="crit-dot dot-dific"></div>Dificultad</div>
+          <div class="crit-label"><div class="crit-dot dot-exam"></div>Relevancia en examen</div>
+          <div class="crit-label"><div class="crit-dot dot-area"></div>Área (C.Nat > Mat > Letras)</div>
+        </div>
+
+        <div class="ranking-add">
+          <input class="ranking-input" id="subj-input" type="text" placeholder="Nombre de la materia…" maxlength="40">
+          <button class="ranking-add-btn" onclick="addSubject()">+ Añadir</button>
+        </div>
+
+        <div class="subj-list" id="subj-list"></div>
+
+        <div class="ranking-result" id="ranking-result" style="display:none;">
+          <div class="ranking-title">✦ Orden de ataque sugerido</div>
+          <div id="rank-list"></div>
+        </div>
+      </div>
+
+      <hr class="section-divider">
+
+      <div class="task" data-id="b2-0" data-xp="20" data-ch="b2" onclick="check(this)">
+        <div class="task-gem"></div>
+        <div class="task-body">
+          <div class="task-text">Estudiar cada materia según el orden</div>
+          <div class="task-xp">+20 xp · guías · estrategias · test en ichvirtual.edu.pe</div>
+        </div>
+      </div>
+      <div class="task" data-id="b2-1" data-xp="10" data-ch="b2" onclick="check(this)">
+        <div class="task-gem"></div>
+        <div class="task-body">
+          <div class="task-text">Anotar logros y errores del día</div>
+          <div class="task-xp">+10 xp · logros generales en el dashboard · errores específicos en la libreta</div>
+        </div>
+      </div>
+      <div class="task" data-id="b2-2" data-xp="10" data-ch="b2" onclick="check(this)">
+        <div class="task-gem"></div>
+        <div class="task-body">
+          <div class="task-text">Hacer las tareas domiciliarias</div>
+          <div class="task-xp">+10 xp</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BLOQUE 3 -->
+  <div class="chapter bloque3" id="b3">
+    <div class="ch-header" onclick="toggle('b3')">
+      <span class="ch-icon">🌿</span>
+      <div class="ch-info">
+        <div class="ch-name">Bloque III — Conclusión del Día</div>
+        <div class="ch-time">cierre · reflexión · mañana</div>
+      </div>
+      <div class="ch-right">
+        <span class="ch-xp-badge" id="badge-b3">0 / 20 xp</span>
+        <span class="ch-chev" id="chev-b3">▾</span>
+      </div>
+    </div>
+    <div class="tasks" id="tasks-b3">
+      <div class="task" data-id="b3-0" data-xp="10" data-ch="b3" onclick="check(this)">
+        <div class="task-gem"></div>
+        <div class="task-body">
+          <div class="task-text">Conclusión del estudio</div>
+          <div class="task-xp">+10 xp · notas · ideas · cambios · motivación</div>
+        </div>
+      </div>
+      <div class="task" data-id="b3-1" data-xp="10" data-ch="b3" onclick="check(this)">
+        <div class="task-gem"></div>
+        <div class="task-body">
+          <div class="task-text">Ojear el syllabus de mañana</div>
+          <div class="task-xp">+10 xp · tener idea mínima de los temas · no ir ciega</div>
+        </div>
+      </div>
+      <p class="ch-note">✦ Cerrar bien el día es también parte del estudio.</p>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════════ DOMINGO ══════════════ -->
+<div id="section-domingo" class="mode-section hidden">
+
+  <div class="chapter dom" id="d1">
+    <div class="ch-header open" onclick="toggle('d1')">
+      <span class="ch-icon">🔬</span>
+      <div class="ch-info">
+        <div class="ch-name">Bloque IV — Dominar lo Difícil</div>
+        <div class="ch-time">mañana · sin prisa</div>
+      </div>
+      <div class="ch-right">
+        <span class="ch-xp-badge" id="badge-d1">0 / 30 xp</span>
+        <span class="ch-chev open" id="chev-d1">▾</span>
+      </div>
+    </div>
+    <div class="tasks open" id="tasks-d1">
+      <div class="task" data-id="d1-0" data-xp="20" data-ch="d1" onclick="check(this)">
+        <div class="task-gem"></div>
+        <div class="task-body">
+          <div class="task-text">Temas más difíciles — dominarlos lo mejor posible</div>
+          <div class="task-xp">+20 xp · los que más cuestan · sin rendirse</div>
+        </div>
+      </div>
+      <div class="task" data-id="d1-1" data-xp="10" data-ch="d1" onclick="check(this)">
+        <div class="task-gem"></div>
+        <div class="task-body">
+          <div class="task-text">Autoevaluarse en cada tema trabajado</div>
+          <div class="task-xp">+10 xp · test propio · ¿qué quedó sólido?</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="chapter dom" id="d2">
+    <div class="ch-header" onclick="toggle('d2')">
+      <span class="ch-icon">⏱️</span>
+      <div class="ch-info">
+        <div class="ch-name">Bloque V — El Simulacro</div>
+        <div class="ch-time">tarde · condiciones reales</div>
+      </div>
+      <div class="ch-right">
+        <span class="ch-xp-badge" id="badge-d2">0 / 30 xp</span>
+        <span class="ch-chev" id="chev-d2">▾</span>
+      </div>
+    </div>
+    <div class="tasks" id="tasks-d2">
+      <div class="task" data-id="d2-0" data-xp="20" data-ch="d2" onclick="check(this)">
+        <div class="task-gem"></div>
+        <div class="task-body">
+          <div class="task-text">Simulacro o examen UNMSM cronometrado</div>
+          <div class="task-xp">+20 xp · prueba similar · sin trampas · tiempo real</div>
+        </div>
+      </div>
+      <div class="task" data-id="d2-1" data-xp="10" data-ch="d2" onclick="check(this)">
+        <div class="task-gem"></div>
+        <div class="task-body">
+          <div class="task-text">Analizar los resultados</div>
+          <div class="task-xp">+10 xp · ¿dónde fallé? · ¿qué mejorar?</div>
+        </div>
+      </div>
+      <p class="ch-note">✦ El simulacro no juzga — informa.</p>
+    </div>
+  </div>
+
+  <div class="chapter dom" id="d3">
+    <div class="ch-header" onclick="toggle('d3')">
+      <span class="ch-icon">🗓️</span>
+      <div class="ch-info">
+        <div class="ch-name">Bloque VI — Planear la Semana</div>
+        <div class="ch-time">cierre del domingo</div>
+      </div>
+      <div class="ch-right">
+        <span class="ch-xp-badge" id="badge-d3">0 / 30 xp</span>
+        <span class="ch-chev" id="chev-d3">▾</span>
+      </div>
+    </div>
+    <div class="tasks" id="tasks-d3">
+      <div class="task" data-id="d3-0" data-xp="10" data-ch="d3" onclick="check(this)">
+        <div class="task-gem"></div>
+        <div class="task-body">
+          <div class="task-text">Índice de Active Recall de la semana</div>
+          <div class="task-xp">+10 xp · el que te toca</div>
+        </div>
+      </div>
+      <div class="task" data-id="d3-1" data-xp="10" data-ch="d3" onclick="check(this)">
+        <div class="task-gem"></div>
+        <div class="task-body">
+          <div class="task-text">Revisar notas y conclusiones de la semana</div>
+          <div class="task-xp">+10 xp · errores · logros · patrones</div>
+        </div>
+      </div>
+      <div class="task" data-id="d3-2" data-xp="10" data-ch="d3" onclick="check(this)">
+        <div class="task-gem"></div>
+        <div class="task-body">
+          <div class="task-text">Planear la semana próxima</div>
+          <div class="task-xp">+10 xp · qué ajustar · qué reforzar · qué mantener</div>
+        </div>
+      </div>
+      <p class="ch-note">✦ Planear bien el domingo es ganar tiempo toda la semana.</p>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">
+  <button class="reset-btn" onclick="resetAll()">— nuevo día —</button>
+  <div class="footer-quote" id="footer-quote">"El conocimiento es el único tesoro que nadie puede quitarte."</div>
+</div>
+</div>
+
+<script>
+// ── Service Worker ──────────────────────────────
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+}
+
+// ── Config ──────────────────────────────────────
+const CFG={
+  semana:{
+    chapters:['b1','b2','b3'],
+    max:{b1:30,b2:40,b3:20},
+    total:90,
+    title:'El Grimorio de Estudio',
+    sub:'Plan Diario · Mónica',
+    fillClass:'',
+    quote:'"El conocimiento es el único tesoro que nadie puede quitarte."'
+  },
+  domingo:{
+    chapters:['d1','d2','d3'],
+    max:{d1:30,d2:30,d3:30},
+    total:90,
+    title:'El Ritual del Domingo',
+    sub:'Refuerzo Semanal · Mónica',
+    fillClass:'sunday',
+    quote:'"Un domingo bien aprovechado vale por tres días."'
+  }
+};
+let currentMode='semana';
+
+// ── Storage ──────────────────────────────────────
+const STORE_TASKS={semana:'estudio_semana_v1',domingo:'estudio_domingo_v1'};
+const STORE_SUBJ='estudio_materias_v1';
+
+function loadTasks(mode){try{const r=localStorage.getItem(STORE_TASKS[mode]);return r?JSON.parse(r):{};}catch(e){return {};}}
+function saveTasks(){
+  const done={};
+  document.querySelectorAll('.task.done').forEach(t=>{if(t.dataset.id)done[t.dataset.id]=true;});
+  try{localStorage.setItem(STORE_TASKS[currentMode],JSON.stringify(done));}catch(e){}
+}
+function applyTasks(mode){
+  const done=loadTasks(mode);
+  CFG[mode].chapters.forEach(ch=>{
+    document.querySelectorAll(`#tasks-${ch} .task`).forEach(t=>t.classList.remove('done'));
+  });
+  Object.keys(done).forEach(id=>{
+    const el=document.querySelector(`[data-id="${id}"]`);
+    if(el)el.classList.add('done');
+  });
+}
+
+function loadSubjects(){try{const r=localStorage.getItem(STORE_SUBJ);return r?JSON.parse(r):[];}catch(e){return [];}}
+function saveSubjects(){try{localStorage.setItem(STORE_SUBJ,JSON.stringify(subjects));}catch(e){}}
+
+// ── Mode ──────────────────────────────────────────
+function setMode(mode){
+  currentMode=mode;
+  document.getElementById('section-semana').classList.toggle('hidden',mode!=='semana');
+  document.getElementById('section-domingo').classList.toggle('hidden',mode!=='domingo');
+  document.getElementById('btn-semana').classList.toggle('active',mode==='semana');
+  document.getElementById('btn-domingo').classList.toggle('active',mode==='domingo');
+  const cfg=CFG[mode];
+  document.getElementById('main-title').textContent=cfg.title;
+  document.getElementById('main-sub').textContent=cfg.sub;
+  document.getElementById('footer-quote').textContent=cfg.quote;
+  const fill=document.getElementById('xp-fill');
+  fill.className='xp-fill'+(cfg.fillClass?' '+cfg.fillClass:'');
+  applyTasks(mode);
+  updateAll();
+}
+
+// ── XP / Tasks ────────────────────────────────────
+function getEarned(ch){
+  return [...document.querySelectorAll(`#tasks-${ch} .task.done`)].reduce((s,t)=>s+parseInt(t.dataset.xp||0),0);
+}
+function updateAll(){
+  const cfg=CFG[currentMode];
+  let total=0;
+  cfg.chapters.forEach(ch=>{
+    const earned=getEarned(ch);total+=earned;
+    const badge=document.getElementById('badge-'+ch);
+    if(!badge)return;
+    badge.textContent=earned+' / '+cfg.max[ch]+' xp';
+    badge.classList.toggle('earned',earned>=cfg.max[ch]);
+  });
+  document.getElementById('xp-display').textContent=total+' / '+cfg.total+' xp';
+  document.getElementById('xp-fill').style.width=Math.round(total/cfg.total*100)+'%';
+}
+function check(el){el.classList.toggle('done');updateAll();saveTasks();}
+function toggle(id){
+  const tasks=document.getElementById('tasks-'+id);
+  const chev=document.getElementById('chev-'+id);
+  const header=document.querySelector(`#${id} .ch-header`);
+  const open=tasks.classList.contains('open');
+  tasks.classList.toggle('open',!open);
+  chev.classList.toggle('open',!open);
+  header.classList.toggle('open',!open);
+}
+function resetAll(){
+  if(!confirm('¿Empezar un nuevo día? Se borrarán las misiones completadas.'))return;
+  CFG[currentMode].chapters.forEach(ch=>{
+    document.querySelectorAll(`#tasks-${ch} .task`).forEach(t=>t.classList.remove('done'));
+  });
+  updateAll();
+  try{localStorage.removeItem(STORE_TASKS[currentMode]);}catch(e){}
+}
+
+// ── RANKING INTERACTIVO ───────────────────────────
+let subjects=loadSubjects();
+
+/*
+  Puntaje: lo que va PRIMERO tiene puntuación MÁS ALTA
+  - Aversión (miedo/disgusto): 1-5, peso 2.5  → más miedo = primero
+  - Dificultad: 1-5, peso 2.0                 → más difícil = primero
+  - Relevancia examen: 1-5, peso 2.0          → más relevante = primero
+  - Área: Ciencias Nat=5, Mat=4, Letras=2-3, peso 1.5
+*/
+function calcScore(s){
+  return s.gusto*2.5 + s.dific*2.0 + s.exam*2.0 + s.area*1.5;
+}
+
+function addSubject(){
+  const inp=document.getElementById('subj-input');
+  const name=inp.value.trim();
+  if(!name)return;
+  subjects.push({id:Date.now(),name,gusto:3,dific:3,exam:3,area:3});
+  inp.value='';
+  saveSubjects();
+  renderSubjects();
+}
+
+function removeSubject(id){
+  subjects=subjects.filter(s=>s.id!==id);
+  saveSubjects();
+  renderSubjects();
+}
+
+function updateSubject(id,field,val){
+  const s=subjects.find(s=>s.id===id);
+  if(s){s[field]=parseInt(val);saveSubjects();renderRanking();}
+}
+
+const AREA_LABELS=['','Letras','Letras+','Mat','C.Nat-','C.Nat'];
+
+function renderSubjects(){
+  const list=document.getElementById('subj-list');
+  list.innerHTML='';
+  subjects.forEach(s=>{
+    const score=calcScore(s);
+    const div=document.createElement('div');
+    div.className='subj-row';
+    div.innerHTML=`
+      <div class="subj-top">
+        <div class="subj-name">${escHtml(s.name)}</div>
+        <span class="subj-score-badge">${score.toFixed(0)} pts</span>
+        <button class="subj-del" onclick="removeSubject(${s.id})" title="Eliminar">✕</button>
+      </div>
+      <div class="sliders">
+        <div class="slider-row">
+          <div class="slider-lbl">😬 Aversión</div>
+          <div class="slider-wrap">
+            <input type="range" class="gusto" min="1" max="5" value="${s.gusto}"
+              oninput="updateSubject(${s.id},'gusto',this.value);this.nextElementSibling.textContent=this.value">
+            <span class="slider-val">${s.gusto}</span>
+          </div>
+        </div>
+        <div class="slider-row">
+          <div class="slider-lbl">🧩 Dificultad</div>
+          <div class="slider-wrap">
+            <input type="range" class="dific" min="1" max="5" value="${s.dific}"
+              oninput="updateSubject(${s.id},'dific',this.value);this.nextElementSibling.textContent=this.value">
+            <span class="slider-val">${s.dific}</span>
+          </div>
+        </div>
+        <div class="slider-row">
+          <div class="slider-lbl">📋 En examen</div>
+          <div class="slider-wrap">
+            <input type="range" class="exam" min="1" max="5" value="${s.exam}"
+              oninput="updateSubject(${s.id},'exam',this.value);this.nextElementSibling.textContent=this.value">
+            <span class="slider-val">${s.exam}</span>
+          </div>
+        </div>
+        <div class="slider-row">
+          <div class="slider-lbl">🔭 Área</div>
+          <div class="slider-wrap">
+            <input type="range" class="area" min="1" max="5" value="${s.area}"
+              oninput="updateSubject(${s.id},'area',this.value);this.nextElementSibling.textContent=AREA_LABELS[this.value]||this.value;renderRanking()">
+            <span class="slider-val">${AREA_LABELS[s.area]||s.area}</span>
+          </div>
+        </div>
+      </div>`;
+    list.appendChild(div);
+  });
+  renderRanking();
+}
+
+function renderRanking(){
+  const wrap=document.getElementById('ranking-result');
+  const list=document.getElementById('rank-list');
+  if(subjects.length===0){wrap.style.display='none';return;}
+  wrap.style.display='block';
+  const sorted=[...subjects].sort((a,b)=>calcScore(b)-calcScore(a));
+  const maxScore=calcScore(sorted[0])||1;
+  list.innerHTML='';
+  sorted.forEach((s,i)=>{
+    const score=calcScore(s);
+    const pct=Math.round(score/maxScore*100);
+    const item=document.createElement('div');
+    item.className='rank-item';
+    item.innerHTML=`
+      <div class="rank-num">${i+1}</div>
+      <div class="rank-name">${escHtml(s.name)}</div>
+      <div class="rank-bar-wrap"><div class="rank-bar" style="width:${pct}%"></div></div>`;
+    list.appendChild(item);
+  });
+}
+
+function escHtml(s){
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Enter en el input
+document.getElementById('subj-input').addEventListener('keydown',e=>{if(e.key==='Enter')addSubject();});
+
+// ── Init ──────────────────────────────────────────
+applyTasks('semana');
+applyTasks('domingo');
+updateAll();
+renderSubjects();
+</script>
+</body>
+</html>
