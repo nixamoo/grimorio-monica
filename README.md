@@ -1,1 +1,1 @@
-# grimorio-m-nica
+# grimorio-monica
