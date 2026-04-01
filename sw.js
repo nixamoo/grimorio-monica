@@ -1,4 +1,4 @@
-const CACHE='estudio-monica-v1';
+const CACHE='grimorio-monica-v1';
 const ASSETS=['./', './index.html', './manifest.json',
   'https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Lato:wght@300;400&display=swap'];
 self.addEventListener('install',e=>{
